@@ -1,12 +1,11 @@
-import { AnimatedSprite, Assets, Texture } from "pixi.js";
+import { AnimatedSprite, Application, Assets, Ticker } from "pixi.js";
 
 export class Character extends AnimatedSprite {
   private speed: number = 2;
 
-  constructor(screenHeight: number) {
-    // Load walk animation textures
+  constructor(app: Application) {
     const textures = Assets.cache.get("/assets/character.json").textures;
-    const walkFrames: Texture[] = [
+    const walkFrames = [
       textures["walk_02.png"],
       textures["walk_03.png"],
       textures["walk_04.png"],
@@ -16,16 +15,23 @@ export class Character extends AnimatedSprite {
     ];
 
     super(walkFrames);
+    this.init(app);
+    this.speed = 1 + Math.random(); // Random speed between 1 and 2
+  }
 
+  /**
+   * Initialize the character's properties
+   */
+  public init(app: Application): void {
     // Set anchor point to center
     this.anchor.set(0.5);
 
-    // Scale down the character (650x650 is quite large)
+    // Scale down the this (650x650 is quite large)
     this.scale.set(0.15);
 
     // Position on the left side at a random height
     this.position.x = -50; // Start off-screen on the left
-    this.position.y = Math.random() * screenHeight;
+    this.position.y = Math.random() * app.screen.height;
 
     // Set animation speed and play
     this.animationSpeed = 0.15;
@@ -36,8 +42,8 @@ export class Character extends AnimatedSprite {
    * Update the character's position
    * @param deltaTime - The time delta from the ticker
    */
-  public update(deltaTime: number): void {
-    this.position.x += this.speed * deltaTime;
+  public updatePosition(ticker: Ticker): void {
+    this.position.x += this.speed * ticker.deltaTime;
   }
 
   /**

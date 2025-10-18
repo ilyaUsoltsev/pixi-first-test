@@ -1,4 +1,5 @@
-import { Application, Assets, AnimatedSprite } from "pixi.js";
+import { Application, Assets } from "pixi.js";
+import { Character } from "./Character";
 
 (async () => {
   // Create a new application
@@ -14,38 +15,11 @@ import { Application, Assets, AnimatedSprite } from "pixi.js";
   await Assets.load("/assets/character.json");
 
   // Array to hold all characters
-  const characters: AnimatedSprite[] = [];
+  const characters: Character[] = [];
 
   // Function to spawn a character
   function spawnCharacter() {
-    // Create an animated sprite from the walk animation
-    const textures = Assets.cache.get("/assets/character.json").textures;
-    const walkFrames = [
-      textures["walk_02.png"],
-      textures["walk_03.png"],
-      textures["walk_04.png"],
-      textures["walk_05.png"],
-      textures["walk_07.png"],
-      textures["walk_08.png"],
-    ];
-
-    const character = new AnimatedSprite(walkFrames);
-
-    // Set anchor point to center
-    character.anchor.set(0.5);
-
-    // Scale down the character (650x650 is quite large)
-    character.scale.set(0.15);
-
-    // Position on the left side at a random height
-    character.position.x = -50; // Start off-screen on the left
-    character.position.y = Math.random() * app.screen.height;
-
-    // Set animation speed and play
-    character.animationSpeed = 0.15;
-    character.play();
-
-    // Add to stage and array
+    const character = new Character(app);
     app.stage.addChild(character);
     characters.push(character);
   }
@@ -64,10 +38,9 @@ import { Application, Assets, AnimatedSprite } from "pixi.js";
   app.ticker.add((time) => {
     // Move all characters to the right
     characters.forEach((character, index) => {
-      character.position.x += 2 * time.deltaTime;
-
+      character.updatePosition(time);
       // Remove character if it goes off-screen on the right
-      if (character.position.x > app.screen.width + 50) {
+      if (character.isOffScreen(app.screen.width)) {
         app.stage.removeChild(character);
         characters.splice(index, 1);
       }
