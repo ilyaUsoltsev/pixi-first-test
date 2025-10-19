@@ -11,4 +11,9 @@ export const CONFIG = {
 
   // Game settings
   DEFAULT_MOVE_SPEED: 5,
+
+  // Path visualization
+  PATH_COLOR: 0xffff00,
+  PATH_LINE_WIDTH: 2,
+  PATH_POINT_RADIUS: 3,
 } as const;

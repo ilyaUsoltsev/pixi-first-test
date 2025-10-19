@@ -1,22 +1,22 @@
 import { Application, Point } from "pixi.js";
-import { Sprite } from "../Sprite";
+import { Entity } from "../entities/Entity";
 
 export class EntityManager {
-  private entities: Sprite[] = [];
+  private entities: Entity[] = [];
 
   constructor(private app: Application) {}
 
-  createEntity(position: Point): Sprite {
-    const entity = new Sprite(position, this.app);
+  createEntity(position: Point): Entity {
+    const entity = new Entity(position, this.app.ticker);
     this.entities.push(entity);
     return entity;
   }
 
-  getEntities(): Sprite[] {
+  getEntities(): Entity[] {
     return [...this.entities];
   }
 
-  removeEntity(entity: Sprite): void {
+  removeEntity(entity: Entity): void {
     const index = this.entities.indexOf(entity);
     if (index > -1) {
       this.entities.splice(index, 1);

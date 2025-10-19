@@ -3,7 +3,7 @@ import { MapManager } from "../MapManager";
 import { PathManager } from "../PathManager";
 import { EntityManager } from "../managers/EntityManager";
 import { CONFIG } from "../config";
-import { Sprite } from "../Sprite";
+import { Entity } from "../entities/Entity";
 
 export class GameScene {
   private mapManager: MapManager;
@@ -48,38 +48,26 @@ export class GameScene {
     await this.moveEntityAlongPath(entity, startPoint, endPoint);
   }
 
-  private moveEntityAlongPath(
-    entity: Sprite,
+  private async moveEntityAlongPath(
+    entity: Entity,
     start: Point,
     end: Point,
   ): Promise<void> {
-    return new Promise((resolve, reject) => {
-      this.pathManager.findPath(
-        start,
-        end,
-        (path) => {
-          if (!path || path.length === 0) {
-            reject(new Error("No path found"));
-            return;
-          }
+    try {
+      // Find the path using Promise-based API
+      const path = await this.pathManager.findPath(start, end);
 
-          const pointsPath = path.map((p) => new Point(p.x, p.y));
+      // Draw the path
+      const pathGraphics = this.pathManager.drawPath(path);
+      this.mapManager.getMapContainer().addChild(pathGraphics);
 
-          // Draw the path
-          const pathGraphics = this.pathManager.drawPath(pointsPath);
-          this.mapManager.getMapContainer().addChild(pathGraphics);
-
-          // Animate the entity along the path
-          entity.setPath(pointsPath);
-          entity.move(CONFIG.DEFAULT_MOVE_SPEED);
-
-          resolve();
-        },
-        () => {
-          reject(new Error("Pathfinding failed"));
-        },
-      );
-    });
+      // Animate the entity along the path
+      entity.setPath(path);
+      entity.move(CONFIG.DEFAULT_MOVE_SPEED);
+    } catch (error) {
+      console.error("Failed to move entity along path:", error);
+      throw error;
+    }
   }
 
   update(deltaTime: number): void {
