@@ -1,4 +1,10 @@
-import { Graphics, Point, Ticker, TickerCallback } from "pixi.js";
+import {
+  DestroyOptions,
+  Graphics,
+  Point,
+  Ticker,
+  TickerCallback,
+} from "pixi.js";
 import { TILE_SIZE } from "../constants";
 
 export class Entity extends Graphics {
@@ -91,7 +97,7 @@ export class Entity extends Graphics {
     console.log("Entity reached destination");
   }
 
-  public override destroy(options?: any): void {
+  public override destroy(options?: DestroyOptions): void {
     this.stopMovement();
     super.destroy(options);
   }
