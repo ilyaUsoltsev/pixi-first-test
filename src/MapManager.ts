@@ -1,6 +1,15 @@
-import { Assets, Container, Point, Rectangle, Sprite, Texture } from "pixi.js";
+import {
+  Assets,
+  Container,
+  FederatedPointerEvent,
+  Point,
+  Rectangle,
+  Sprite,
+  Texture,
+} from "pixi.js";
 import { MapData } from "./types";
 import { TILE_SIZE } from "./constants";
+import { eventBus } from "./events/EventBus";
 
 class MapManager {
   collisionGrid: number[][];
@@ -18,6 +27,8 @@ class MapManager {
     this.renderBaseLayer("Base", "3");
     this.renderBaseLayer("Collision", "4");
     this.collisionGrid = this.createCollisionGrid();
+    this.mapContainer.interactive = true;
+    this.mapContainer.on("pointerdown", this.clickOnMap.bind(this));
   }
 
   public getCollisionGrid(): number[][] {
@@ -125,6 +136,46 @@ class MapManager {
         }
       }
     }
+  }
+
+  private clickOnMap(event: FederatedPointerEvent): void {
+    const localPos = event.currentTarget.toLocal(event.global);
+    const tileX = Math.floor(localPos.x / this.tileSize);
+    const tileY = Math.floor(localPos.y / this.tileSize);
+
+    // Check if click is within map bounds
+    if (
+      tileX < 0 ||
+      tileX >= this.mapData.mapWidth ||
+      tileY < 0 ||
+      tileY >= this.mapData.mapHeight
+    ) {
+      return;
+    }
+
+    // Check if tile already has a collision
+    const existingTile = this.collisionGrid[tileY][tileX];
+    if (existingTile) {
+      console.log(`Tile (${tileX}, ${tileY}) already has collision`);
+      return;
+    }
+
+    // Update the collision grid
+    this.collisionGrid[tileY][tileX] = 1;
+
+    // Render the collision sprite
+    const texture = this.tileTextures.get("4");
+    if (texture) {
+      const sprite = new Sprite(texture);
+      sprite.x = tileX * this.tileSize;
+      sprite.y = tileY * this.tileSize;
+      this.mapContainer.addChild(sprite);
+    }
+
+    console.log(`Added collision tile at: (${tileX}, ${tileY})`);
+
+    // Emit event to notify other systems
+    eventBus.emit("map:collisionAdded", { x: tileX, y: tileY });
   }
 }
 

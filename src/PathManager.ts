@@ -2,6 +2,7 @@ import EasyStar from "easystarjs";
 import { Graphics, Point } from "pixi.js";
 import { TILE_SIZE } from "./constants";
 import { CONFIG } from "./config";
+import { eventBus } from "./events/EventBus";
 
 export interface PathResult {
   path: Point[];
@@ -12,6 +13,7 @@ export class PathManager {
   private easystar: EasyStar.js;
   private gridWidth: number;
   private gridHeight: number;
+  private collisionGrid: number[][];
 
   constructor(collisionGrid: number[][]) {
     if (!collisionGrid || collisionGrid.length === 0) {
@@ -20,12 +22,38 @@ export class PathManager {
 
     this.gridHeight = collisionGrid.length;
     this.gridWidth = collisionGrid[0].length;
+    this.collisionGrid = collisionGrid;
 
     this.easystar = new EasyStar.js();
     this.easystar.setGrid(collisionGrid);
     this.easystar.setAcceptableTiles([0]); // 0 is walkable
     this.easystar.enableDiagonals();
     this.easystar.disableCornerCutting();
+
+    // Subscribe to collision events
+    this.setupEventListeners();
+  }
+
+  private setupEventListeners(): void {
+    eventBus.on("map:collisionAdded", ({ x, y }) => {
+      this.updateCollisionTile(x, y, 1);
+    });
+
+    eventBus.on("map:collisionRemoved", ({ x, y }) => {
+      this.updateCollisionTile(x, y, 0);
+    });
+  }
+
+  private updateCollisionTile(x: number, y: number, value: number): void {
+    // Update the collision grid
+    this.collisionGrid[y][x] = value;
+
+    // Notify EasyStar to update its internal grid
+    this.easystar.setGrid(this.collisionGrid);
+
+    console.log(
+      `PathManager: Updated collision at (${x}, ${y}) to ${value ? "blocked" : "walkable"}`,
+    );
   }
 
   public async findPath(
@@ -108,5 +136,11 @@ export class PathManager {
           `Grid size: ${this.gridWidth}x${this.gridHeight}`,
       );
     }
+  }
+
+  public destroy(): void {
+    // Clean up event listeners when PathManager is destroyed
+    eventBus.clearEvent("map:collisionAdded");
+    eventBus.clearEvent("map:collisionRemoved");
   }
 }
